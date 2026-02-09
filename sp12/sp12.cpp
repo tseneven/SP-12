@@ -7,6 +7,7 @@ int awaitTimeValue;
 int timerValue = 600; 
 
 HANDLE printer; 
+
 HANDLE hTimerThread; 
 DWORD IDTimerThread; 
 
@@ -20,11 +21,17 @@ DWORD WINAPI timer(LPVOID)
 { 
 	while (timerValue != 0) 
 	{ 
-		Sleep(1000); timerValue--; 
+		Sleep(1000); 
+		timerValue--; 
 	} 
 	cout << "Время ожидания вышло" << endl; 
+
+	CloseHandle(hTimerThread);
+	CloseHandle(printer);
+
 	exit(0); // https://learn.microsoft.com/ru-ru/cpp/cpp/program-termination?view=msvc-170 чтоб не лукавить, вот дока 
 } 
+
 
 int main() 
 { 
@@ -34,22 +41,35 @@ int main()
 	hTimerThread = CreateThread(NULL, 0, timer, NULL, 0, &IDTimerThread); 
 
 	printer = CreateMutex(NULL, FALSE, name); 
-	
-	while (true) { 
-		DWORD wait = WaitForSingleObject(printer, INFINITE); 
-		
-		if (wait == WAIT_OBJECT_0) 
-		{ 
-			cout << "ПЕЧАТЬ" << endl; 
-			awaitTimeValue = randomInt(5000, 15000); 
-			Sleep(awaitTimeValue); 
-			if (awaitTimeValue >= 10000) 
-			{ 
-				cout << "Ошибка печати" << endl; 
-			} timerValue = 600; ReleaseMutex(printer); 
 
-			cout << "Готово" << endl; 
-		} Sleep(200); 
+	cout << "Принтер готов." << endl;
+
+	while (true) { 
+		DWORD wait = WaitForSingleObject(printer, 1000);
+		if (wait == WAIT_OBJECT_0) {
+			ReleaseMutex(printer);
+		}
+
+
+		if (wait != WAIT_OBJECT_0)
+		{
+			WaitForSingleObject(printer, INFINITE);
+
+			cout << "ПЕЧАТЬ" << endl;
+			awaitTimeValue = randomInt(5000, 15000);
+			Sleep(awaitTimeValue);
+			if (awaitTimeValue >= 10000)
+			{
+				cout << "Ошибка печати" << endl;
+			}
+			timerValue = 600;
+			ReleaseMutex(printer);
+
+
+			cout << "Готово" << endl;
+		}
+		ReleaseMutex(printer);
+
 	} 
 	CloseHandle(hTimerThread); 
 	CloseHandle(printer); 

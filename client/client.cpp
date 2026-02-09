@@ -9,8 +9,6 @@ HANDLE printer;
 int main() {
 
 	setlocale(0, "rus");
-	printer = OpenMutex(MUTEX_ALL_ACCESS, NULL, L"printer");
-
 
 	cout << "Выберите приоритет:" << endl;
 	cout << "1 - ФОНОВЫЙ ПРОЦЕСС" << endl;
@@ -33,8 +31,10 @@ int main() {
 		break;
 	}
 
+	printer = OpenMutex(MUTEX_ALL_ACCESS, NULL, L"printer");
+
 	while (true) {
-		DWORD wait = WaitForSingleObject(printer, 1000);
+		DWORD wait = WaitForSingleObject(printer, 10);
 
 		if (!printer) {
 			cout << "Принтер занят или не запущен. Повтор попытки через 10 секунд";
@@ -42,14 +42,14 @@ int main() {
 		}
 		else {
 			if (wait == WAIT_OBJECT_0) {
-				cout << "Принтер готов. Нажмите клавишу\n";
+				cout << "Принтер готов. Нажмите клавишу" << endl;
 				_getch();
-				cout << "Задание отправлено на печать\n" << endl;
-				ReleaseMutex(printer);
+				cout << "Задание отправлено на печать" << endl;
 			}
 			else if (wait == WAIT_TIMEOUT) {
 				cout << "Принтер занят" << endl;
 			}
+			ReleaseMutex(printer);
 		}
 	}
 
